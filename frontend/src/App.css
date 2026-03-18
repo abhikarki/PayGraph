@@ -1,0 +1,236 @@
+.App {
+  width: 100%;
+}
+
+/* Dark Mode Foundation */
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+/* Smooth transitions */
+button {
+  transition: all 0.3s ease;
+}
+
+input,
+select {
+  transition: all 0.2s ease;
+}
+
+/* Scrollbar styling - Modern */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #60a5fa, #a78bfa);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(15, 23, 42, 0.8);
+  scrollbar-width: thin;
+}
+
+/* Glassmorphism Backdrop */
+.glassmorphic {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Neon Gradient Text */
+.neon-text {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Grid Background Pattern */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Subtle Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.pulse-ring {
+  animation: pulse-ring 2s infinite;
+}
+
+/* React Flow Custom Styling */
+.react-flow__node {
+  background: transparent;
+}
+
+.react-flow__edge path {
+  stroke-width: 2;
+}
+
+.react-flow__controls {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+}
+
+.react-flow__controls button {
+  background: rgba(59, 130, 246, 0.2) !important;
+  color: #e0e7ff !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  border-radius: 6px;
+}
+
+.react-flow__controls button:hover {
+  background: rgba(59, 130, 246, 0.4) !important;
+}
+
+.react-flow__minimap {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+}
+
+/* Chart responsive */
+.recharts-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Form Input Styling */
+input[type='text'],
+input[type='number'],
+input[type='email'],
+select,
+textarea {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #e2e8f0;
+  border-radius: 6px;
+}
+
+input[type='text']:focus,
+input[type='number']:focus,
+input[type='email']:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+/* Button Base Styling */
+button {
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Micro animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* Responsive Grid */
+@media (max-width: 768px) {
+  .grid-cols-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+  }
+}
+
+/* Tooltip Styling */
+.tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 0 12px rgba(59, 130, 246, 0.2);
+  backdrop-filter: blur(12px);
+}
+

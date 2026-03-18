@@ -18,6 +18,22 @@ class RoutingEngine:
     def __init__(self):
         self.supported_corridors = self._initialize_corridors()
         self.corridor_cache = {}
+        # Currency code to primary country code mapping
+        self.currency_to_country = {
+            "USD": "US",
+            "EUR": "DE",  # Default to Germany, but support other EU countries
+            "GBP": "GB",
+            "BRL": "BR",
+            "INR": "IN",
+            "MXN": "MX",
+            "ZAR": "ZA",
+            "NGN": "NG",
+            "JPY": "JP",
+            "SGD": "SG",
+            "HKD": "HK",
+        }
+        # EU countries that use EUR
+        self.euro_countries = ["AT", "BE", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SK", "SI"]
 
     def _initialize_corridors(self) -> Dict[str, Dict]:
         return {
@@ -34,8 +50,8 @@ class RoutingEngine:
                 "supported": True,
                 "liquidity_premium": 1.01  # +1% for less liquid corridor
             },
-            # US to Europe
-            "US_to_EUR": {
+            # US to Europe (Germany)
+            "US_to_DE": {
                 "methods": ["Wire", "SWIFT", "Wise", "USDC_Ethereum"],
                 "currencies": [("USD", "EUR")],
                 "supported": True,
@@ -61,13 +77,31 @@ class RoutingEngine:
     ) -> List[Dict]:
         logger.info(f"Analyzing routes: {source_currency} to {destination_currency} ({destination_country})")
         
+        # Convert source currency to country code
+        source_country = self.currency_to_country.get(source_currency, source_currency)
+        
+        # For EUR currency, use the provided country code
+        if destination_currency == "EUR" and destination_country in self.euro_countries:
+            # Use the actual country code provided (e.g., DE, FR, IT)
+            pass  # destination_country is already set correctly
+        
         # Get applicable corridor
-        corridor_key = f"{source_currency}_to_{destination_country}"
+        corridor_key = f"{source_country}_to_{destination_country}"
         corridor = self.supported_corridors.get(corridor_key)
         
         if not corridor or not corridor.get("supported"):
             logger.warning(f"Corridor {corridor_key} not supported")
-            return []
+            # Try alternate keys for common cases
+            if destination_currency == "EUR" and destination_country not in self.euro_countries:
+                # If destination is EUR but country code doesn't match, try with a default EU country
+                alternate_key = f"{source_country}_to_{self.currency_to_country.get(destination_currency, destination_country)}"
+                corridor = self.supported_corridors.get(alternate_key)
+                if corridor and corridor.get("supported"):
+                    logger.info(f"Using alternate corridor: {alternate_key}")
+                    corridor_key = alternate_key
+            
+            if not corridor or not corridor.get("supported"):
+                return []
 
         # Build route candidates
         routes = []
@@ -132,7 +166,19 @@ class RoutingEngine:
             "USDC_Polygon": 96.0,  # Good
         }
         
+        # Map method names to RouteTypeEnum values
+        route_type_map = {
+            "ACH": "ach",
+            "Wire": "international_wire",
+            "SWIFT": "international_wire",
+            "Wise": "wise",
+            "USDC_Solana": "usdc_solana",
+            "USDC_Ethereum": "usdc_ethereum",
+            "USDC_Polygon": "usdc_polygon",
+        }
+        
         return {
+            "route_type": route_type_map.get(method, method.lower()),
             "method": method,
             "provider": self._get_provider_name(method),
             "source_amount": amount,

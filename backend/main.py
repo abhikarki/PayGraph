@@ -20,18 +20,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def lifespan(app: FastAPI):
-    @asynccontextmanager
-    async def manager():
-        logger.info("🚀 PayGraph API Starting...")
-        logger.info(f"Environment: {get_settings().api_env}")
-        
-        yield
-        
-        # Shutdown
-        logger.info("🛑 PayGraph API Shutting down...")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage app lifecycle"""
+    logger.info(" PayGraph API Starting...")
+    logger.info(f"Environment: {get_settings().api_env}")
     
-    return manager().__enter__()
+    yield
+    
+    # Shutdown
+    logger.info(" PayGraph API Shutting down...")
 
 
 settings = get_settings()
@@ -40,6 +38,7 @@ app = FastAPI(
     title="PayGraph API",
     description="Payment Routing Advisory Platform - Analyze cross-border payment paths",
     version="0.1.0",
+    lifespan=lifespan,
     docs_url="/api/docs" if settings.is_development else None,  
     redoc_url="/api/redoc" if settings.is_development else None,
     openapi_url="/api/openapi.json" if settings.is_development else None,
@@ -49,35 +48,45 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
     max_age=3600, 
 )
 
+# Allow localhost for development
+allowed_hosts = ["localhost", "127.0.0.1", "0.0.0.0"] + settings.cors_origins_list
+
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=settings.cors_origins if isinstance(settings.cors_origins, list) else ["*"]
+    allowed_hosts=allowed_hosts
 )
 
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     """Add security headers to all responses"""
-    response = await call_next(request)
-    
-    # Security headers
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Content-Security-Policy"] = "default-src 'self'"
-    
-    # Remove server info
-    response.headers.pop("Server", None)
-    
-    return response
+    try:
+        response = await call_next(request)
+        
+        # Security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        
+        # Remove server info
+        try:
+            del response.headers["Server"]
+        except KeyError:
+            pass
+        
+        return response
+    except Exception as e:
+        logger.error(f"Error in security headers middleware: {str(e)}", exc_info=True)
+        raise
 
 
 @app.middleware("http")

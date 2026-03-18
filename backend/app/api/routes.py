@@ -133,8 +133,8 @@ async def analyze_routes(
         logger.debug(f"[{request_id}] Analyzing {len(available_methods)} methods")
         
         analyzed_routes = _routing_engine.analyze_routes(
-            source_currency=request.source_currency,
-            destination_currency=request.destination_currency,
+            source_currency=request.source_currency.value,
+            destination_currency=request.destination_currency.value,
             destination_country=request.destination_country,
             amount=request.amount,
             available_methods=available_methods,
@@ -152,7 +152,7 @@ async def analyze_routes(
             
             route_option = RouteOption(
                 route_id=f"route_{request_id}_{idx}",
-                route_type=route["method"],
+                route_type=route["route_type"],
                 provider=route["provider"],
                 cost=RouteCost(
                     provider_fee=route["cost"].get("provider_fee", 0),
