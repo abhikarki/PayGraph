@@ -1,3 +1,0 @@
-"""
-PayGraph Service Packages
-"""
