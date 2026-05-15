@@ -24,21 +24,20 @@ if not MORALIS_API_KEY:
 
 MORALIS_BASE_URL = "https://api.moralis.com/api/v2"
 MIN_LIQUIDITY_USD = 10000
-ARBITRUM_CHAIN = "arbitrum"
 
 TOKENS = {
     "USDC": {
-        "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5F86",
+        "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
         "decimals": 6,
         "symbol": "USDC"
     },
     "XSGD": {
-        "address": "0x4c9b3175d12febda81cbbae9b1015ad7921c50ec",
-        "decimals": 18,
+        "address": "0xDC3326e71D45186F113a2F448984CA0e8D201995",
+        "decimals": 6,
         "symbol": "XSGD"
     },
     "WETH": {
-        "address": "0x82af49447d8a07e3bd95bd0d56f318667581b29f",
+        "address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
         "decimals": 18,
         "symbol": "WETH"
     }
@@ -85,11 +84,11 @@ class QuoteRequest(BaseModel):
     token_in: str
     token_out: str
     amount_in: float
-    chain: str = "arbitrum"
+    chain: str = "polygon"
 
 
 
-async def get_token_pairs(token_address: str, chain: str = "arbitrum"):
+async def get_token_pairs(token_address: str, chain: str = "polygon"):
     """Fetch all pairs for a given token from Moralis API"""
     url = f"{MORALIS_BASE_URL}/erc20/{token_address}/pairs"
     headers = {
@@ -125,7 +124,7 @@ async def get_token_pairs(token_address: str, chain: str = "arbitrum"):
             )
 
 
-async def discover_and_rank_pools(token_in_address: str, token_out_address: str, chain: str = "arbitrum") -> List[PoolData]:    
+async def discover_and_rank_pools(token_in_address: str, token_out_address: str, chain: str = "polygon") -> List[PoolData]:    
     token_in_pairs = await get_token_pairs(token_in_address, chain)
     token_out_pairs = await get_token_pairs(token_out_address, chain)
     
@@ -226,7 +225,7 @@ def calculate_trade(pool: PoolData, amount_in: float, output_token_usd_price: fl
         effective_price=effective_price
     )
 
-async def find_intermediate_pools(token_in_address: str, token_intermediate_address: str, chain: str = "arbitrum") -> List[PoolData]:
+async def find_intermediate_pools(token_in_address: str, token_intermediate_address: str, chain: str = "polygon") -> List[PoolData]:
     return await discover_and_rank_pools(token_in_address, token_intermediate_address, chain)
 
 
