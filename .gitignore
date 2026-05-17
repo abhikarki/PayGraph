@@ -5,6 +5,8 @@
 
 .venv
 
+package-lock.json
+
 # Python
 __pycache__/
 *.py[cod]
