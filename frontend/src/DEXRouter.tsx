@@ -9,6 +9,7 @@ import type {
   HistoryData,
   StatusData,
   OptimizeMode,
+  Snapshot,
 } from "./types";
 
 const API_BASE = "http://localhost:8000";
@@ -322,7 +323,7 @@ const DEXRouter: FC = () => {
       }
 
       // Draw edges
-      edges.forEach(e => {
+      edges.forEach((e: PairEdge) => {
         const a = simNodes.get(e.source);
         const b = simNodes.get(e.target);
         if (!a || !b) return;
@@ -362,7 +363,7 @@ const DEXRouter: FC = () => {
       });
 
       // Draw nodes
-      nodes.forEach(n => {
+      nodes.forEach((n: TokenNode) => {
         const pos = simNodes.get(n.id);
         if (!pos) return;
         const isFrom = fromToken === n.id;
@@ -447,7 +448,7 @@ const DEXRouter: FC = () => {
       return;
     }
     const edge = getEdgeAt(cx, cy);
-    if (edge) { setSelectedEdge(prev => prev?.pair_id === edge.pair_id ? null : edge); }
+    if (edge) { setSelectedEdge((prev: PairEdge | null) => prev?.pair_id === edge.pair_id ? null : edge); }
   };
 
   const handleMouseDown = (ev: React.MouseEvent<HTMLCanvasElement>) => {
@@ -795,7 +796,7 @@ const DEXRouter: FC = () => {
                         </span>
                       </div>
                       <div style={S.hops}>
-                        {route.hops.map((h, i) => (
+                        {route.hops.map((h: string, i: number) => (
                           <span key={i}>
                             <span style={S.hopToken(TOKEN_COLORS[h] ?? "#94a3b8")}>{h}</span>
                             {i < route.hops.length - 1 && <span style={S.arrow}> → </span>}
@@ -882,15 +883,15 @@ const DEXRouter: FC = () => {
                     <>
                       <div style={{ marginTop: 12 }}>
                         <div style={S.label}>Price USD</div>
-                        <Spark values={history.snapshots.map(s => s.price_usd)} color="#facc15" width={268} height={44} />
+                        <Spark values={history.snapshots.map((s: Snapshot) => s.price_usd)} color="#facc15" width={268} height={44} />
                       </div>
                       <div style={{ marginTop: 8 }}>
                         <div style={S.label}>Liquidity USD</div>
-                        <Spark values={history.snapshots.map(s => s.liquidity_usd)} color="#22c55e" width={268} height={44} />
+                        <Spark values={history.snapshots.map((s: Snapshot) => s.liquidity_usd)} color="#22c55e" width={268} height={44} />
                       </div>
                       <div style={{ marginTop: 8 }}>
                         <div style={S.label}>Volume 1h</div>
-                        <Spark values={history.snapshots.map(s => s.volume_1h)} color="#627EEA" width={268} height={44} />
+                        <Spark values={history.snapshots.map((s: Snapshot) => s.volume_1h)} color="#627EEA" width={268} height={44} />
                       </div>
                       <div style={{ marginTop: 8, fontSize: 9, color: "#475569" }}>
                         {history.snapshots.length} snapshots over {historyHours}h

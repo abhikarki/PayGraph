@@ -61,7 +61,7 @@ app.add_middleware(
 app.include_router(graph_routes.router)
 app.include_router(path_routes.router)
 app.include_router(history_routes.router)
-app.include_outer(status_routes.router)
+app.include_router(status_routes.router)
 
 @app.get("/", include_in_schema=False)
 async def root():

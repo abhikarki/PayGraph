@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type {
   GraphData,
   RoutesData,
   HistoryData,
   StatusData,
   OptimizeMode,
-} from "../types";
+} from "./types";
 
 const API_BASE = "http://localhost:8000";
 
