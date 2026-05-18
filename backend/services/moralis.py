@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import httpx
+import asyncio
+from time import time
 
 from config import MORALIS_API_KEY, MORALIS_BASE_URL, CHAIN
 
@@ -34,3 +36,50 @@ async def get_pair_data(
             
     except Exception as exc:
         raise Exception(f"Failed to fetch pair data: {str(exc)}")
+
+
+async def get_all_pairs_data(pairs: list) -> list[dict]:
+    # Fetch data for all pairs with rate limiting (max 7 calls per second).
+    # Calls Moralis API sequentially for each pair, maintaining rate limit.    
+    from config import TOKENS
+    
+    results = []
+    max_calls_per_second = 7
+    min_delay_between_calls = 1.0 / max_calls_per_second  # ~143ms
+    
+    last_call_time = 0
+    
+    for pair_config in pairs:
+        try:
+            # Rate limiting: ensure minimum delay between calls
+            elapsed = time() - last_call_time
+            if elapsed < min_delay_between_calls:
+                await asyncio.sleep(min_delay_between_calls - elapsed)
+            
+            last_call_time = time()
+            
+            token0 = TOKENS.get(pair_config.token0)
+            token1 = TOKENS.get(pair_config.token1)
+            
+            if not token0 or not token1:
+                logger.warning(f"Token not found for pair {pair_config.token0}-{pair_config.token1}")
+                continue
+            
+            result = await get_pair_data(token0.address, token1.address)
+            
+            results.append({
+                "pair_id": f"{pair_config.token0}-{pair_config.token1}",
+                "token0": pair_config.token0,
+                "token1": pair_config.token1,
+                "pair_address_count": result["pair_address_count"],
+                "api_response": result["api_response"],
+            })
+            
+            logger.info(f"Fetched data for {pair_config.token0}-{pair_config.token1}")
+            
+        except Exception as exc:
+            logger.error(f"Failed to fetch pair {pair_config.token0}-{pair_config.token1}: {str(exc)}")
+            # Continue with next pair instead of failing
+            continue
+    
+    return results

@@ -14,4 +14,17 @@ export interface PairResponse {
   api_response: Record<string, any>
 }
 
+export interface PairData {
+  pair_id: string
+  token0: string
+  token1: string
+  pair_address_count: number
+  api_response: Record<string, any>
+}
+
+export interface AllPairsResponse {
+  timestamp: string
+  pairs: PairData[]
+}
+
 

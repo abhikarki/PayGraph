@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional, Any
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class Token(BaseModel):
@@ -17,4 +18,17 @@ class TokensResponse(BaseModel):
 class PairResponse(BaseModel):
     pair_address_count: int
     api_response: dict[str, Any]
+
+
+class PairData(BaseModel):
+    pair_id: str
+    token0: str
+    token1: str
+    pair_address_count: int
+    api_response: dict[str, Any]
+
+
+class AllPairsResponse(BaseModel):
+    timestamp: datetime
+    pairs: list[PairData]
 
