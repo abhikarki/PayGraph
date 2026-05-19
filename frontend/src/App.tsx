@@ -88,7 +88,7 @@ function App() {
                 fontSize: '14px',
                 color: '#666'
               }}>
-                <strong>📊 Graph Info:</strong> {allPairsData.pairs.length} pairs loaded
+                <strong>Graph Info:</strong> {allPairsData.pairs.length} pairs loaded
                 {' | '}
                 Nodes: tokens | Edges: pair relationships (labeled with pair address count)
               </div>
