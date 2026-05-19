@@ -8,6 +8,8 @@
   flex-direction: column;
   background-color: #fafafa;
   margin-bottom: 20px;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .token-graph-info {
@@ -17,20 +19,121 @@
   font-weight: 500;
   color: #1976d2;
   font-size: 14px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .token-graph-info p {
   margin: 0;
 }
 
-.token-graph {
-  flex: 1;
-  background-color: white;
+.selected-info {
+  font-size: 13px;
+  background: white;
+  padding: 4px 12px;
+  border-radius: 3px;
+  border: 1px solid #90caf9;
 }
 
-/* Responsive design */
+.token-graph-svg {
+  flex: 1;
+  background-color: white;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Node styling - Desktop (default) */
+.node {
+  fill: #4CAF50;
+  stroke: #2e7d32;
+  stroke-width: 2;
+  transition: all 0.2s;
+  r: 25px; /* Default node radius */
+}
+
+.node:hover {
+  fill: #45a049;
+  stroke: #1b5e20;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(69, 160, 73, 0.3));
+}
+
+.node.hovered {
+  fill: #45a049;
+  stroke: #1b5e20;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(69, 160, 73, 0.3));
+}
+
+.node.selected {
+  fill: #1b5e20;
+  stroke: #0d47a1;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(13, 71, 161, 0.5));
+}
+
+/* Edge label styling */
+.edge-label {
+  background-color: white;
+  padding: 2px 4px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* Tablet (768px) - Medium scaling */
+@media (max-width: 1024px) {
+  .token-graph-container {
+    height: 500px;
+  }
+
+  .node {
+    r: 20px;
+  }
+
+  .token-graph-svg text:not(.edge-label) {
+    font-size: 11px !important;
+  }
+
+  .edge-label {
+    font-size: 10px !important;
+  }
+}
+
+/* Mobile (375px) - Small scaling */
 @media (max-width: 768px) {
   .token-graph-container {
     height: 400px;
+  }
+
+  .token-graph-info {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 12px;
+    padding: 10px;
+  }
+
+  .token-graph-info p {
+    margin: 0;
+  }
+
+  .selected-info {
+    margin-top: 4px;
+    font-size: 11px;
+  }
+
+  .node {
+    r: 15px;
+  }
+
+  .token-graph-svg text:not(.edge-label) {
+    font-size: 9px !important;
+  }
+
+  .edge-label {
+    font-size: 8px !important;
   }
 }

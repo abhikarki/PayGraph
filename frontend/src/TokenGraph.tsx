@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import cytoscape from 'cytoscape'
+import { useEffect, useRef, useState } from 'react'
+import * as d3 from 'd3'
 import './TokenGraph.css'
 import type { PairData } from './types'
 
@@ -7,148 +7,264 @@ interface TokenGraphProps {
   pairs: PairData[]
 }
 
+interface Node extends d3.SimulationNodeDatum {
+  id: string
+  label: string
+  x?: number
+  y?: number
+  fx?: number | null
+  fy?: number | null
+}
+
+interface Link extends d3.SimulationLinkDatum<Node> {
+  source: Node | string
+  target: Node | string
+  value: number
+  label: string
+}
+
 export function TokenGraph({ pairs }: TokenGraphProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const cyRef = useRef<cytoscape.Core | null>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null)
+  const nodesRef = useRef<Map<string, Node>>(new Map())
+  const linksRef = useRef<Link[]>([])
+  const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null)
 
+  // Initialize graph structure only once
   useEffect(() => {
-    if (!containerRef.current || pairs.length === 0) return
+    if (!svgRef.current || pairs.length === 0) return
 
-    // Build node and edge lists from pairs data
-    const nodesMap = new Map<string, { id: string; label: string }>()
-    const edges: cytoscape.ElementDefinition[] = []
+    // Only initialize once
+    if (simulationRef.current) return
 
-    // Collect all tokens as nodes
+    const container = svgRef.current.parentElement as HTMLElement
+    const width = container.clientWidth
+    const height = container.clientHeight
+
+    // Build initial nodes and links
+    const nodesMap = new Map<string, Node>()
+    const links: Link[] = []
+
     pairs.forEach(pair => {
       if (!nodesMap.has(pair.token0)) {
-        nodesMap.set(pair.token0, { id: pair.token0, label: pair.token0 })
+        nodesMap.set(pair.token0, {
+          id: pair.token0,
+          label: pair.token0,
+          x: width / 2 + (Math.random() - 0.5) * 100,
+          y: height / 2 + (Math.random() - 0.5) * 100,
+          fx: undefined,
+          fy: undefined,
+        })
       }
       if (!nodesMap.has(pair.token1)) {
-        nodesMap.set(pair.token1, { id: pair.token1, label: pair.token1 })
+        nodesMap.set(pair.token1, {
+          id: pair.token1,
+          label: pair.token1,
+          x: width / 2 + (Math.random() - 0.5) * 100,
+          y: height / 2 + (Math.random() - 0.5) * 100,
+          fx: undefined,
+          fy: undefined,
+        })
       }
 
-      // Extract pair address count as edge weight
-      const edgeId = `${pair.token0}-${pair.token1}`
-      const value = pair.pair_address_count || 0
-
-      edges.push({
-        data: {
-          id: edgeId,
-          source: pair.token0,
-          target: pair.token1,
-          label: value.toString(),
-          value: value,
-        },
+      links.push({
+        source: pair.token0,
+        target: pair.token1,
+        value: pair.pair_address_count || 0,
+        label: (pair.pair_address_count || 0).toString(),
       })
     })
 
-    // Convert nodes map to array
-    const nodes: cytoscape.ElementDefinition[] = Array.from(nodesMap.values()).map(node => ({
-      data: {
-        id: node.id,
-        label: node.label,
-      },
-    }))
+    nodesRef.current = nodesMap
+    linksRef.current = links
+    const nodes = Array.from(nodesMap.values())
 
-    // Initialize Cytoscape
-    const cy = cytoscape({
-      container: containerRef.current,
-      elements: [...nodes, ...edges],
-      style: [
-        {
-          selector: 'node',
-          style: {
-            content: 'data(label)',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'background-color': '#4CAF50',
-            color: 'white',
-            'font-size': '14px',
-            'font-weight': 'bold',
-            width: '60px',
-            height: '60px',
-            'border-width': '2px',
-            'border-color': '#2e7d32',
-            padding: '10px',
-          },
-        },
-        {
-          selector: 'node:hover',
-          style: {
-            'background-color': '#45a049',
-            'border-color': '#1b5e20',
-            'border-width': '3px',
-          },
-        },
-        {
-          selector: 'edge',
-          style: {
-            content: 'data(label)',
-            'line-color': '#90caf9',
-            'target-arrow-color': '#90caf9',
-            'target-arrow-shape': 'triangle',
-            'arrow-scale': 1.5,
-            'edge-distances': 'node-position',
-            'curve-style': 'bezier',
-            'text-background-color': '#fff',
-            'text-background-padding': '3px',
-            'text-background-opacity': 1,
-            'font-size': '12px',
-            'text-valign': 'center',
-            'color': '#333',
-            'width': '2px',
-          },
-        },
-        {
-          selector: 'edge:hover',
-          style: {
-            'line-color': '#42a5f5',
-            'target-arrow-color': '#42a5f5',
-            width: '3px',
-            'text-background-color': '#e3f2fd',
-          },
-        },
-      ],
-      layout: {
-        name: 'cose',
-        animate: true,
-        animationDuration: 500,
-        randomize: false,
-        componentSpacing: 40,
-        gravity: 1,
-      },
-    })
+    // Set up SVG
+    const svg = d3
+      .select(svgRef.current)
+      .attr('width', width)
+      .attr('height', height)
 
-    cyRef.current = cy
+    // Create force simulation with increased spacing
+    const simulation = d3
+      .forceSimulation(nodes)
+      .force(
+        'link',
+        d3
+          .forceLink(links)
+          .id((d: any) => d.id)
+          .distance(150) // Increased from 100
+          .strength(0.3) // Reduced from 0.5 for more spread
+      )
+      .force('charge', d3.forceManyBody().strength(-500)) // Increased from -300
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide(50)) // Increased from 40
+      .stop() // Stop immediately, we'll tick manually
 
-    // Auto-layout on window resize
+    // Let it stabilize for a moment
+    for (let i = 0; i < 300; ++i) simulation.tick()
+
+    simulationRef.current = simulation
+
+    // Create arrow marker for directed edges
+    svg
+      .append('defs')
+      .append('marker')
+      .attr('id', 'arrowhead')
+      .attr('markerWidth', 10)
+      .attr('markerHeight', 10)
+      .attr('refX', 25)
+      .attr('refY', 3)
+      .attr('orient', 'auto')
+      .append('polygon')
+      .attr('points', '0 0, 10 3, 0 6')
+      .style('fill', '#90caf9')
+
+    // Create groups for better organization
+    const g = svg.append('g')
+
+    // Draw links
+    const linkGroup = g
+      .append('g')
+      .attr('class', 'links')
+      .selectAll('line')
+      .data(links)
+      .enter()
+      .append('line')
+      .attr('stroke', '#90caf9')
+      .attr('stroke-width', 2)
+      .attr('marker-end', 'url(#arrowhead)')
+      .attr('x1', (d: any) => d.source.x)
+      .attr('y1', (d: any) => d.source.y)
+      .attr('x2', (d: any) => d.target.x)
+      .attr('y2', (d: any) => d.target.y)
+
+    // Draw link labels
+    const linkLabels = g
+      .append('g')
+      .attr('class', 'link-labels')
+      .selectAll('text')
+      .data(links)
+      .enter()
+      .append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '-5px')
+      .attr('font-size', '12px')
+      .attr('fill', '#333')
+      .attr('class', 'edge-label')
+      .attr('x', (d: any) => (d.source.x + d.target.x) / 2)
+      .attr('y', (d: any) => (d.source.y + d.target.y) / 2)
+      .text((d: any) => d.label)
+
+    // Draw nodes
+    const nodeGroup = g
+      .append('g')
+      .attr('class', 'nodes')
+      .selectAll('circle')
+      .data(nodes)
+      .enter()
+      .append('circle')
+      .attr('r', 25) // Responsive sizing will be in CSS
+      .attr('fill', '#4CAF50')
+      .attr('stroke', '#2e7d32')
+      .attr('stroke-width', 2)
+      .attr('class', 'node')
+      .attr('cx', (d: any) => d.x)
+      .attr('cy', (d: any) => d.y)
+      .style('cursor', 'pointer')
+      .on('click', (_: any, d: any) => {
+        setSelectedNode(selectedNode === d.id ? null : d.id)
+      })
+      .on('mouseover', (_: any, d: any) => {
+        setHoveredNode(d.id)
+      })
+      .on('mouseout', () => {
+        setHoveredNode(null)
+      })
+
+    // Draw node labels
+    const labels = g
+      .append('g')
+      .attr('class', 'labels')
+      .selectAll('text')
+      .data(nodes)
+      .enter()
+      .append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.3em')
+      .attr('font-size', '13px')
+      .attr('font-weight', 'bold')
+      .attr('fill', 'white')
+      .attr('pointer-events', 'none')
+      .attr('x', (d: any) => d.x)
+      .attr('y', (d: any) => d.y)
+      .text((d: Node) => d.label)
+
+    // Store references for updates
+    ;(svgRef.current as any)._linkGroup = linkGroup
+    ;(svgRef.current as any)._linkLabels = linkLabels
+    ;(svgRef.current as any)._nodeGroup = nodeGroup
+    ;(svgRef.current as any)._labels = labels
+
+    // Handle window resize
     const handleResize = () => {
-      cy.resize()
-      cy.fit()
+      const newWidth = container.clientWidth
+      const newHeight = container.clientHeight
+      svg.attr('width', newWidth).attr('height', newHeight)
     }
 
     window.addEventListener('resize', handleResize)
 
-    // Fit to view
-    setTimeout(() => {
-      cy.fit()
-    }, 500)
-
     return () => {
       window.removeEventListener('resize', handleResize)
-      if (cyRef.current) {
-        cyRef.current.destroy()
-        cyRef.current = null
-      }
     }
+  }, [])
+
+  // Update only edge labels when pairs data changes
+  useEffect(() => {
+    if (!svgRef.current || pairs.length === 0 || !simulationRef.current) return
+
+    const links: Link[] = []
+    pairs.forEach(pair => {
+      links.push({
+        source: pair.token0,
+        target: pair.token1,
+        value: pair.pair_address_count || 0,
+        label: (pair.pair_address_count || 0).toString(),
+      })
+    })
+
+    linksRef.current = links
+
+    // Update link labels only
+    const linkLabels = d3.select(svgRef.current).select('.link-labels')
+    linkLabels
+      .selectAll('text')
+      .data(links, (d: any) => `${d.source}-${d.target}`)
+      .text((d: any) => d.label)
   }, [pairs])
+
+  // Update styles when hover/select changes
+  useEffect(() => {
+    if (!svgRef.current) return
+    d3.select(svgRef.current)
+      .selectAll('.node')
+      .attr('class', (d: any) => {
+        let classes = 'node'
+        if (d.id === selectedNode) classes += ' selected'
+        if (d.id === hoveredNode) classes += ' hovered'
+        return classes
+      })
+  }, [selectedNode, hoveredNode])
 
   return (
     <div className="token-graph-container">
       <div className="token-graph-info">
-        <p>📊 Token Pair Graph - Edges show pair address count</p>
+        <p>Token Pair Graph</p>
+        {selectedNode && <span className="selected-info">Selected: {selectedNode}</span>}
       </div>
-      <div ref={containerRef} className="token-graph" />
+      <svg ref={svgRef} className="token-graph-svg" />
     </div>
   )
 }
