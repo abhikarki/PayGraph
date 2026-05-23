@@ -11,6 +11,12 @@ class Token(BaseModel):
     logo_url: Optional[str] = None
 
 
+class Metrics(BaseModel):
+    liquidity_score: float
+    estimated_slippage_1pct: float
+    price_impact_1pct: float
+
+
 class TokensResponse(BaseModel):
     tokens: list[Token]
 
@@ -19,12 +25,6 @@ class PairResponse(BaseModel):
     pair_address_count: int
     api_response: dict[str, Any]
     metrics: Metrics
-
-
-class Metrics(BaseModel):
-    liquidity_score: float
-    estimated_slippage_1pct: float
-    price_impact_1pct: float
 
 
 class PairData(BaseModel):
