@@ -68,11 +68,13 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
         })
       }
 
+      const slippage = pair.metrics?.estimated_slippage_1pct || 0
+      const priceImpact = pair.metrics?.price_impact_1pct || 0
       links.push({
         source: pair.token0,
         target: pair.token1,
         value: pair.pair_address_count || 0,
-        label: (pair.pair_address_count || 0).toString(),
+        label: `S: ${slippage.toFixed(2)}% | P: ${priceImpact.toFixed(4)}%`,
       })
     })
 
@@ -86,7 +88,7 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
       .attr('width', width)
       .attr('height', height)
 
-    // Create force simulation with increased spacing
+    // Create force simulation with increased spacing for readability
     const simulation = d3
       .forceSimulation(nodes)
       .force(
@@ -94,16 +96,16 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
         d3
           .forceLink(links)
           .id((d: any) => d.id)
-          .distance(150) // Increased from 100
-          .strength(0.3) // Reduced from 0.5 for more spread
+          .distance(300) // Doubled from 150
+          .strength(0.2) // Reduced for more spread
       )
-      .force('charge', d3.forceManyBody().strength(-500)) // Increased from -300
+      .force('charge', d3.forceManyBody().strength(-1200)) // Increased from -500
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide(50)) // Increased from 40
+      .force('collision', d3.forceCollide(80)) // Increased from 50
       .stop() // Stop immediately, we'll tick manually
 
-    // Let it stabilize for a moment
-    for (let i = 0; i < 300; ++i) simulation.tick()
+    // Let it stabilize longer
+    for (let i = 0; i < 500; ++i) simulation.tick()
 
     simulationRef.current = simulation
 
@@ -227,11 +229,13 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
 
     const links: Link[] = []
     pairs.forEach(pair => {
+      const slippage = pair.metrics?.estimated_slippage_1pct || 0
+      const priceImpact = pair.metrics?.price_impact_1pct || 0
       links.push({
         source: pair.token0,
         target: pair.token1,
         value: pair.pair_address_count || 0,
-        label: (pair.pair_address_count || 0).toString(),
+        label: `S: ${slippage.toFixed(2)}% | P: ${priceImpact.toFixed(4)}%`,
       })
     })
 
@@ -259,12 +263,6 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
   }, [selectedNode, hoveredNode])
 
   return (
-    <div className="token-graph-container">
-      <div className="token-graph-info">
-        <p>Token Pair Graph</p>
-        {selectedNode && <span className="selected-info">Selected: {selectedNode}</span>}
-      </div>
-      <svg ref={svgRef} className="token-graph-svg" />
-    </div>
+    <svg ref={svgRef} className="token-graph-svg" />
   )
 }

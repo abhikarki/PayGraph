@@ -9,9 +9,16 @@ export interface TokensResponse {
   tokens: Token[]
 }
 
+export interface Metrics {
+  liquidity_score: number
+  estimated_slippage_1pct: number
+  price_impact_1pct: number
+}
+
 export interface PairResponse {
   pair_address_count: number
   api_response: Record<string, any>
+  metrics: Metrics
 }
 
 export interface PairData {
@@ -20,6 +27,7 @@ export interface PairData {
   token1: string
   pair_address_count: number
   api_response: Record<string, any>
+  metrics: Metrics
 }
 
 export interface AllPairsResponse {
