@@ -22,12 +22,16 @@ class PairMetrics:
             
             if self.token0 and self.token1:
                 base_score = 75.0
-                t0_price = self.token0.get("usdPrice")
-                t1_price = self.token1.get("usdPrice")
-                if t0_price and t1_price:
+                # Check if token data is available (look for symbol or name fields)
+                t0_symbol = self.token0.get("symbol")
+                t1_symbol = self.token1.get("symbol")
+                t0_verified = self.token0.get("verified_contract")
+                t1_verified = self.token1.get("verified_contract")
+                
+                if (t0_symbol and t1_symbol) or (t0_verified and t1_verified):
                     base_score = 85.0
             
-            logger.info(f"Liquidity score: {base_score}")
+            logger.info(f"Liquidity score: {base_score} (token0: {self.token0.get('symbol')}, token1: {self.token1.get('symbol')})")
             return round(base_score, 2)
         except Exception as e:
             logger.warning(f"Error calculating liquidity score: {e}")
@@ -41,10 +45,13 @@ class PairMetrics:
             if not self.token0 or not self.token1:
                 return round(0.3, 2)
             
-            t0_price = self.token0.get("usdPrice")
-            t1_price = self.token1.get("usdPrice")
+            # Check if token data is available (look for symbol or verified fields)
+            t0_symbol = self.token0.get("symbol")
+            t1_symbol = self.token1.get("symbol")
+            t0_verified = self.token0.get("verified_contract")
+            t1_verified = self.token1.get("verified_contract")
             
-            if t0_price and t1_price:
+            if (t0_symbol and t1_symbol) or (t0_verified and t1_verified):
                 result = round(0.05, 2)
             else:
                 result = round(base_slippage, 2)
@@ -63,10 +70,13 @@ class PairMetrics:
             if not self.token0 or not self.token1:
                 return round(0.02, 4)
             
-            t0_price = self.token0.get("usdPrice")
-            t1_price = self.token1.get("usdPrice")
+            # Check if token data is available (look for symbol or verified fields)
+            t0_symbol = self.token0.get("symbol")
+            t1_symbol = self.token1.get("symbol")
+            t0_verified = self.token0.get("verified_contract")
+            t1_verified = self.token1.get("verified_contract")
             
-            if t0_price and t1_price:
+            if (t0_symbol and t1_symbol) or (t0_verified and t1_verified):
                 result = round(0.001, 4)
             else:
                 result = round(base_impact, 4)

@@ -13,6 +13,14 @@ function App() {
   const [lastUpdated, setLastUpdated] = useState<string>('')
   const [selectedPair, setSelectedPair] = useState<PairData | null>(null)
 
+  const handleEdgeClick = (pair: PairData) => {
+    console.log('Edge clicked, pair data:', pair)
+    console.log('api_response:', pair.api_response)
+    console.log('token0 data:', pair.api_response?.token0)
+    console.log('token1 data:', pair.api_response?.token1)
+    setSelectedPair(pair)
+  }
+
   useEffect(() => {
     const fetchAllPairs = async () => {
       try {
@@ -53,7 +61,7 @@ function App() {
         {error && <div className="error-banner">{error}</div>}
         {allPairsData && allPairsData.pairs.length > 0 ? (
           <>
-            <TokenGraph pairs={allPairsData.pairs} onEdgeClick={setSelectedPair} />
+            <TokenGraph pairs={allPairsData.pairs} onEdgeClick={handleEdgeClick} />
             {selectedPair && (
               <div className="details-popup">
                 <div className="popup-header">
@@ -77,8 +85,8 @@ function App() {
                   <section className="popup-section">
                     <h3>Metrics</h3>
                     <div className="info-row">
-                      <label>Liquidity:</label>
-                      <span>{selectedPair.metrics?.liquidity_score || 0}</span>
+                      <label>Liquidity Score:</label>
+                      <span>{selectedPair.metrics?.liquidity_score || 0}/100</span>
                     </div>
                     <div className="info-row">
                       <label>Slippage (1%):</label>
@@ -88,6 +96,33 @@ function App() {
                       <label>Price Impact (1%):</label>
                       <span>{(selectedPair.metrics?.price_impact_1pct || 0).toFixed(6)}%</span>
                     </div>
+                  </section>
+
+                  <section className="popup-section">
+                    <h3>Pool Liquidity</h3>
+                    {selectedPair.api_response?.reserve0 ? (
+                      <>
+                        <div className="info-row small">
+                          <label>{selectedPair.token0}:</label>
+                          <span>{parseFloat(selectedPair.api_response.reserve0).toLocaleString(undefined, {maximumFractionDigits: 2})}</span>
+                        </div>
+                        <div className="info-row small">
+                          <label>{selectedPair.token1}:</label>
+                          <span>{parseFloat(selectedPair.api_response.reserve1).toLocaleString(undefined, {maximumFractionDigits: 2})}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="info-row">
+                        <label>{selectedPair.token0}:</label>
+                        <span>{selectedPair.api_response?.token0?.symbol ? '✓' : '○'}</span>
+                      </div>
+                    )}
+                    {!selectedPair.api_response?.reserve0 && selectedPair.api_response?.token1 && (
+                      <div className="info-row">
+                        <label>{selectedPair.token1}:</label>
+                        <span>{selectedPair.api_response?.token1?.symbol ? '✓' : '○'}</span>
+                      </div>
+                    )}
                   </section>
 
                   <section className="popup-section">

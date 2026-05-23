@@ -26,6 +26,10 @@ async def get_pair_data(
         
         if resp.status_code == 200:
             data = resp.json()
+            logger.info(f"Moralis API response keys: {data.keys()}")
+            logger.info(f"Token0 keys: {data.get('token0', {}).keys() if data.get('token0') else 'None'}")
+            logger.info(f"Token1 keys: {data.get('token1', {}).keys() if data.get('token1') else 'None'}")
+            logger.info(f"Reserve0: {data.get('reserve0')}, Reserve1: {data.get('reserve1')}")
             # Count how many pair addresses are in response
             count = 1 if data.get("pairAddress") else 0
             
