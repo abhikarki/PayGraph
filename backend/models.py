@@ -18,6 +18,13 @@ class TokensResponse(BaseModel):
 class PairResponse(BaseModel):
     pair_address_count: int
     api_response: dict[str, Any]
+    metrics: Metrics
+
+
+class Metrics(BaseModel):
+    liquidity_score: float
+    estimated_slippage_1pct: float
+    price_impact_1pct: float
 
 
 class PairData(BaseModel):
@@ -26,6 +33,7 @@ class PairData(BaseModel):
     token1: str
     pair_address_count: int
     api_response: dict[str, Any]
+    metrics: Metrics
 
 
 class AllPairsResponse(BaseModel):

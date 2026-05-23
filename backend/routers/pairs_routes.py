@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from config import TOKENS, PAIRS
 from services.moralis import get_pair_data, get_all_pairs_data
-from models import PairResponse, AllPairsResponse, PairData
+from services.metrics import calculate_pair_metrics
+from models import PairResponse, AllPairsResponse, PairData, Metrics
 
 router = APIRouter(prefix="/pairs", tags=["pairs"])
 
@@ -24,6 +25,7 @@ async def get_pair(token0_symbol: str, token1_symbol: str):
         return PairResponse(
             pair_address_count=result["pair_address_count"],
             api_response=result["api_response"],
+            metrics=Metrics(**result["metrics"]),
         )
     except Exception as exc:
         raise HTTPException(500, str(exc))
@@ -41,6 +43,7 @@ async def get_all_pairs():
                 token1=pd["token1"],
                 pair_address_count=pd["pair_address_count"],
                 api_response=pd["api_response"],
+                metrics=Metrics(**pd["metrics"]),
             )
             for pd in pairs_data
         ]

@@ -6,6 +6,7 @@ import asyncio
 from time import time
 
 from config import MORALIS_API_KEY, MORALIS_BASE_URL, CHAIN
+from services.metrics import calculate_pair_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +28,14 @@ async def get_pair_data(
             data = resp.json()
             # Count how many pair addresses are in response
             count = 1 if data.get("pairAddress") else 0
+            
+            # Calculate metrics from the API response
+            metrics = calculate_pair_metrics(data)
+            
             return {
                 "pair_address_count": count,
                 "api_response": data,
+                "metrics": metrics,
             }
         else:
             raise Exception(f"API error {resp.status_code}: {resp.text[:200]}")
@@ -73,6 +79,7 @@ async def get_all_pairs_data(pairs: list) -> list[dict]:
                 "token1": pair_config.token1,
                 "pair_address_count": result["pair_address_count"],
                 "api_response": result["api_response"],
+                "metrics": result["metrics"],
             })
             
             logger.info(f"Fetched data for {pair_config.token0}-{pair_config.token1}")
