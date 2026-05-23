@@ -5,6 +5,7 @@ import type { PairData } from './types'
 
 interface TokenGraphProps {
   pairs: PairData[]
+  onEdgeClick?: (pair: PairData) => void
 }
 
 interface Node extends d3.SimulationNodeDatum {
@@ -23,11 +24,12 @@ interface Link extends d3.SimulationLinkDatum<Node> {
   label: string
 }
 
-export function TokenGraph({ pairs }: TokenGraphProps) {
+export function TokenGraph({ pairs, onEdgeClick }: TokenGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null)
   const nodesRef = useRef<Map<string, Node>>(new Map())
   const linksRef = useRef<Link[]>([])
+  const pairsRef = useRef<Map<string, PairData>>(new Map())
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
 
@@ -70,12 +72,14 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
 
       const slippage = pair.metrics?.estimated_slippage_1pct || 0
       const priceImpact = pair.metrics?.price_impact_1pct || 0
+      const linkKey = `${pair.token0}-${pair.token1}`
       links.push({
         source: pair.token0,
         target: pair.token1,
         value: pair.pair_address_count || 0,
         label: `S: ${slippage.toFixed(2)}% | P: ${priceImpact.toFixed(4)}%`,
       })
+      pairsRef.current.set(linkKey, pair)
     })
 
     nodesRef.current = nodesMap
@@ -131,7 +135,7 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
       .append('g')
       .attr('class', 'links')
       .selectAll('line')
-      .data(links)
+      .data(links, (d: any, i: number) => `${d.source.id}-${d.target.id}-${i}`)
       .enter()
       .append('line')
       .attr('stroke', '#90caf9')
@@ -141,6 +145,30 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
       .attr('y1', (d: any) => d.source.y)
       .attr('x2', (d: any) => d.target.x)
       .attr('y2', (d: any) => d.target.y)
+
+    // Draw invisible thick lines for easier clicking
+    const linkHitArea = g
+      .append('g')
+      .attr('class', 'link-hit-areas')
+      .selectAll('line')
+      .data(links, (d: any, i: number) => `${d.source.id}-${d.target.id}-${i}`)
+      .enter()
+      .append('line')
+      .attr('stroke', 'transparent')
+      .attr('stroke-width', 15)
+      .attr('x1', (d: any) => d.source.x)
+      .attr('y1', (d: any) => d.source.y)
+      .attr('x2', (d: any) => d.target.x)
+      .attr('y2', (d: any) => d.target.y)
+      .style('cursor', 'pointer')
+      .on('click', (_: any, d: any) => {
+        const linkKey = `${d.source.id}-${d.target.id}`
+        const pairData = pairsRef.current.get(linkKey)
+        console.log('Edge clicked:', linkKey, pairData)
+        if (pairData && onEdgeClick) {
+          onEdgeClick(pairData)
+        }
+      })
 
     // Draw link labels
     const linkLabels = g
@@ -205,6 +233,7 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
 
     // Store references for updates
     ;(svgRef.current as any)._linkGroup = linkGroup
+    ;(svgRef.current as any)._linkHitArea = linkHitArea
     ;(svgRef.current as any)._linkLabels = linkLabels
     ;(svgRef.current as any)._nodeGroup = nodeGroup
     ;(svgRef.current as any)._labels = labels
@@ -227,16 +256,19 @@ export function TokenGraph({ pairs }: TokenGraphProps) {
   useEffect(() => {
     if (!svgRef.current || pairs.length === 0 || !simulationRef.current) return
 
+    pairsRef.current.clear()
     const links: Link[] = []
     pairs.forEach(pair => {
       const slippage = pair.metrics?.estimated_slippage_1pct || 0
       const priceImpact = pair.metrics?.price_impact_1pct || 0
+      const linkKey = `${pair.token0}-${pair.token1}`
       links.push({
         source: pair.token0,
         target: pair.token1,
         value: pair.pair_address_count || 0,
         label: `S: ${slippage.toFixed(2)}% | P: ${priceImpact.toFixed(4)}%`,
       })
+      pairsRef.current.set(linkKey, pair)
     })
 
     linksRef.current = links
